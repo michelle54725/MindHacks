@@ -9,7 +9,7 @@ function MindHacks(props) {
 }
 
 // Developed by:
-// William Brandon
+// William Brandon, Grace Lin, Myles Domingo, Michelle Mao
 
 class App extends Component {
   render() {
