@@ -25,11 +25,7 @@ function addToPath(path, point) {
 
 //view for path
 function DisplayPath(props) {
-    //svg expects strings, so convert to strings
-  const pointStrings = props.path.map((each)=>each[0].toString() + ',' + each[1].toString())
-  const pointSingleString = pointStrings.join(' ')
-  return <polyline fill="none" stroke="black"
-  points={pointSingleString}/>
+  return <polyline fill="none" stroke="black" points={props.path}/>;
 }
 
 //Test
