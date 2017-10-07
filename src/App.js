@@ -9,7 +9,10 @@ function MindHacks(props) {
 }
 
 // Developed by:
-// William Brandon, Grace Lin, Myles Domingo, Michelle Mao
+// Grace Lin, Myles Domingo, Michelle Mao
+
+// Mentored by:
+// William Brandon
 
 //paths
 const empty = []
