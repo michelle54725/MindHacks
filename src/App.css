@@ -1,1 +1,19 @@
 /* styling information. used by App.js */
+body {
+    background-color: lightblue;
+}
+
+#Title {
+    color: white;
+    text-align: center;
+}
+
+h2 {
+    color: black;
+    text-align: center;
+}
+
+p {
+    font-family: verdana;
+    font-size: 20px;
+}
