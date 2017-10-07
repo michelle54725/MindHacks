@@ -41,7 +41,7 @@ function getBounds(path) {
 	let minY = path[0][1];
 	let maxX = path[0][0];
 	let maxY = path[0][1];
-	for(point in path){
+	for(let point in path){
 		minX = Math.min(minX, point[0]);
 		minY = Math.min(minY, point[1]);
 		maxX = Math.max(maxX, point[0]);
@@ -61,7 +61,7 @@ function newBounds(b1, b2){
 
 function addPath(cell, path){
 	const newpath = cell.paths.slice()
-	newpath = newpath.push(path)
+	newpath.push(path)
 	return {paths: newpath, bounds: newBounds(getBounds(path), cell.bounds)}
 }
 
