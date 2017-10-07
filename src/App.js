@@ -40,7 +40,7 @@ function getBounds(path) {
 	let minX = path[0][0];
 	let minY = path[0][1];
 	let maxX = path[0][0];
-	let minY = path[0][1];
+	let maxY = path[0][1];
 	for(point in path){
 		minX = Math.min(minX, point[0]);
 		minY = Math.min(minY, point[1]);
@@ -75,7 +75,7 @@ function DisplayCell(props){
 			height={props.cell.bounds.maxY-props.cell.bounds.minY+padding+padding}
 			style="fill:rgb(255,255,255);stroke-width:3;stroke:rgb(0,0,0)"/>
 		{props.cell.paths.map((path) => <DisplayPath path={path}/>)}
-	<g/>)
+	</g>)
 }
 
 class App extends Component {
