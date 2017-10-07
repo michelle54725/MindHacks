@@ -32,8 +32,55 @@ function DisplayPath(props) {
   points={pointSingleString}/>
 }
 
+//Test
 let path = addToPath(empty, [100,100])
 path = addToPath(path, [200,100])
+
+
+function getBounds(path) {
+	if (path.length == 0) {
+		throw new Error("Path has no points");
+	}
+	let minX = path[0][0];
+	let minY = path[0][1];
+	let maxX = path[0][0];
+	let minY = path[0][1];
+	for(point in path){
+		minX = Math.min(minX, point[0]);
+		minY = Math.min(minY, point[1]);
+		maxX = Math.max(maxX, point[0]);
+		maxY = Math.max(maxY, point[1]);
+	}
+	return {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
+}
+
+//Cell takes the min and max values of corresponding paths
+//Initial default cell
+const padding = 40
+const emptyCell = {paths: [], bounds: {minX:0, minY:0, maxX:0, maxY:0}}
+
+function newBounds(b1, b2){
+	return {minX: Math.min(b1.minX, b2.minX), minY: Math.min(b1.minY, b2.minY), maxX: Math.max(b1.maxX, b2.maxX), maxY: Math.max(b1.maxY, b2.maxY)};
+}
+
+function addPath(cell, path){
+	const newpath = cell.paths.slice()
+	newpath = newpath.push(path)
+	return {paths: newpath, bounds: newBounds(getBounds(path), cell.bounds)}
+}
+
+function DisplayCell(props){
+	// const pathList = props.cell.paths.map((path) => pathList[])
+	return(<g>
+		<rect
+			x={props.cell.bounds.minX-padding}
+			y={props.cell.bounds.minY-padding}
+			width={props.cell.bounds.maxX-props.cell.bounds.minX+padding+padding}
+			height={props.cell.bounds.maxY-props.cell.bounds.minY+padding+padding}
+			style="fill:rgb(255,255,255);stroke-width:3;stroke:rgb(0,0,0)"/>
+		{props.cell.paths.map((path) => <DisplayPath path={path}/>)}
+	<g/>)
+}
 
 class App extends Component {
   render() {
