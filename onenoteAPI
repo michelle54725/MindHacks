@@ -1,0 +1,17 @@
+POST https://www.onenote.com/api/v1.0/me/notes/pages
+
+Authorization: Bearer {token}
+Content-Type: text/html; charset=utf-8
+Accept: application/json
+ ...
+
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>My new OneNote page</title>
+    <meta name="created" content="2015-09-9T12:45:00.000-8:00"/>
+    </head>
+    <body>
+        <p>This is a simple HTML page.</p>
+    </body>
+</html>
