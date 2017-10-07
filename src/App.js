@@ -4,7 +4,7 @@ import './App.css';
 
 function MindHacks(props) {
 //props = properties = stores data its representing, which is data that will be provided to Component to change)
-  return <span> Author: {props.author}. Version: {props.version}.0. MindHacks!!! </span>;
+  return <span> Author: {props.author}. Version: {props.version}.0.</span>;
 //in later <MindHacks/> call: opening tag with slash at end = both opening/closing tags
 }
 
