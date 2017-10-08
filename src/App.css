@@ -1,1 +1,12 @@
 /* styling information. used by App.js */
+.transition-transform {
+  transition: transform 0.1s;
+}
+
+.transition-path {
+  transition: d 0.1s;
+}
+
+.node {
+  stroke-width: 5px;
+}

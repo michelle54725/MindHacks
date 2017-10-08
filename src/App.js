@@ -29,7 +29,7 @@ function DisplayPath(props) {
 }
 
 function getBounds(path) {
-	if (path.length == 0) {
+	if (path.length === 0) {
 		throw new Error("Path has no points");
 	}
 	let minX = path[0][0];
@@ -102,13 +102,27 @@ function DisplayPaths(props) {
   </g>;
 }
 
+function relativeTranslation(oldCell, newCell) {
+	return {
+		x: newCell.bounds.minX - oldCell.bounds.minX,
+		y: (newCell.bounds.maxY - oldCell.bounds.maxY) / 2 + (newCell.bounds.minY - oldCell.bounds.minY) / 2,
+	};
+}
+
 function DisplayCell(props) {
 	function eventRelativePoint(event) {
 		const boundingRect = event.target.getBoundingClientRect();
-		return [
-			event.clientX - boundingRect.x - padding + props.cell.bounds.minX,
-			event.clientY - boundingRect.y - padding + props.cell.bounds.minY,
-		];
+		if (event.touches === undefined) {
+			return [
+				event.clientX - boundingRect.x - padding + props.cell.bounds.minX,
+				event.clientY - boundingRect.y - padding + props.cell.bounds.minY,
+			];
+		} else {
+			return [
+				event.touches[0].clientX - boundingRect.x - padding + props.cell.bounds.minX,
+				event.touches[0].clientY - boundingRect.y - padding + props.cell.bounds.minY,
+			];
+		}
 	}
 
 	const x = props.cell.bounds.minX - padding;
@@ -122,23 +136,31 @@ function DisplayCell(props) {
   }
 
 	const handleInitiate = (event) => {
+		event.preventDefault();
 		const point = eventRelativePoint(event);
 		let newCell = props.cell;
 		newCell = initializePath(newCell);
 		newCell = addToCurrentPath(newCell, point);
 		props.onCellUpdate(newCell);
+		props.onTranslation(relativeTranslation(props.cell, newCell));
+		return false;
 	};
 
 	const handleAdd = (event) => {
+		event.preventDefault();
 		if (props.cell.currentPath !== null) {
 			const point = eventRelativePoint(event);
-			props.onCellUpdate(addToCurrentPath(props.cell, point));
+			const newCell = addToCurrentPath(props.cell, point);
+			props.onCellUpdate(newCell);
+			props.onTranslation(relativeTranslation(props.cell, newCell));
+			return false;
 		}
 	};
 
 	const handleComplete = (event) => {
-		const point = eventRelativePoint(event);
-		props.onCellUpdate(completePath(props.cell, point));
+		event.preventDefault();
+		props.onCellUpdate(completePath(props.cell));
+		return false;
 	}
 
   return(<g>
@@ -152,9 +174,12 @@ function DisplayCell(props) {
 			fill="transparent"
 			stroke="tranparent"
 			onMouseDown={handleInitiate}
+			onTouchStart={handleInitiate}
 			onMouseMove={handleAdd}
+			onTouchMove={handleAdd}
 			onMouseUp={handleComplete}
 			onMouseLeave={handleComplete}
+			onTouchEnd={handleComplete}
 		/>
 	</g>);
 }
@@ -197,7 +222,7 @@ function makeChild(NoteNode) {
 
 //layout algorithm. Take list of notenodes, figure out position for each one
 
-const horizontalSpacingAspectRatio = 0.2;
+const horizontalSpacingAspectRatio = 0.1;
 const minHorizontalSpacing = 40;
 
 function CurveBetween(props) {
@@ -210,8 +235,13 @@ function CurveBetween(props) {
         ${props.x2} ${props.y2}
     `}
     fill="none"
-    stroke="black"
+    stroke={props.stroke}
+		className="transition-path"
   />
+}
+
+function spectrumColor(hue) {
+	return `hsl(${hue}, 100%, 70%)`;
 }
 
 // Component of note node
@@ -239,18 +269,20 @@ class DisplayNoteNode extends Component{
     const bounds = this.props.node.cell.bounds;
     const paddedWidth = bounds.maxX - bounds.minX + padding * 2;
     const paddedHeight = bounds.maxY - bounds.minY + padding * 2;
+		const connectionColor = spectrumColor(this.props.spectrum.startHue);
     const nodeCell = (
       <g>
         <g transform={`translate(${-bounds.minX + padding},${-bounds.minY + padding - paddedHeight / 2})`}>
           <DisplayCell
             cell={this.props.node.cell}
             onCellUpdate={this.cellUpdateHandler}
+						onTranslation={this.props.onTranslation}
           />
         </g>
         <line
           x1={0} y1={paddedHeight / 2}
           x2={paddedWidth} y2={paddedHeight / 2}
-          stroke="black"
+          stroke={connectionColor}
         />
       </g>
     );
@@ -262,24 +294,32 @@ class DisplayNoteNode extends Component{
     let childYTop = -this.props.node.maxHeight / 2;
     const positionedChildren = [];
     this.prepareChildUpdateHandlers();
+		const hueStep = (this.props.spectrum.endHue - this.props.spectrum.startHue) / (this.props.node.children.length);
     this.props.node.children.forEach((child, index) => {
       const childYPos = childYTop + child.maxHeight / 2;
       const childConnectY = childYPos + (child.cell.bounds.maxY - child.cell.bounds.minY) / 2 + padding;
+			const childSpectrum = {
+				startHue: this.props.spectrum.startHue + hueStep * index,
+				endHue: this.props.spectrum.startHue + hueStep * (index + 1),
+			}
       positionedChildren.push(<g>
         <CurveBetween
           x1={paddedWidth} y1={paddedHeight / 2}
           x2={childXPos} y2={childConnectY}
+					stroke={spectrumColor(childSpectrum.startHue)}
         />
-        <g transform={`translate(${childXPos},${childYPos})`}>
+        <g transform={`translate(${childXPos},${childYPos})`} className="transition-transform">
           <DisplayNoteNode
             node={child}
             onNodeUpdate={this.childUpdateHandlers[index]}
+						onTranslation={this.props.onTranslation}
+						spectrum={childSpectrum}
           />
         </g>
       </g>);
       childYTop += child.maxHeight + spacing;
     });
-    return <g>
+    return <g className="node">
       {nodeCell}
       {positionedChildren}
       <circle
@@ -297,7 +337,24 @@ class DisplayNoteNode extends Component{
 class App extends Component {
 	constructor() {
 		super()
-		this.state = { node: emptyNode };
+		this.state = { node: emptyNode, translation: { x: 500, y: 500 } };
+
+		this.nodeUpdateHandler = (newNode) => {
+			this.setState((old) => ({
+				node: newNode,
+				translation: old.translation,
+			}));
+		};
+
+		this.translationHandler = (delta) => {
+			this.setState((old) => ({
+				node: old.node,
+				translation: { 
+					x: old.translation.x + delta.x,
+					y: old.translation.y + delta.y,
+				},
+			}));
+		};
 	}
 
   render() {
@@ -306,12 +363,12 @@ class App extends Component {
         <em> A component!! </em>
         <MindHacks author='Oski' version={4}/>
         <svg width="10000" height="10000">
-					<g transform="translate(500, 500)">
+					<g transform={`translate(${this.state.translation.x}, ${this.state.translation.y})`}>
             <DisplayNoteNode
               node={this.state.node}
-              onNodeUpdate={(newNode) => {
-                this.setState({ node: newNode });
-              }}
+              onNodeUpdate={this.nodeUpdateHandler}
+							onTranslation={this.translationHandler}
+							spectrum={{startHue: 0, endHue: 360}}
             />
 					</g>
         </svg>
