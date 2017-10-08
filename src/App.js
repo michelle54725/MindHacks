@@ -25,7 +25,7 @@ function addToPath(path, point) {
 
 //view for path
 function DisplayPath(props) {
-  return <polyline fill="none" stroke="black" points={props.path}/>;
+  return <polyline fill="none" stroke="black" strokeWidth={2} points={props.path}/>;
 }
 
 //Test
@@ -110,8 +110,8 @@ function DisplayCell(props) {
 	function eventRelativePoint(event) {
 		const boundingRect = event.target.getBoundingClientRect();
 		return [
-			event.pageX - boundingRect.x - padding + props.cell.bounds.minX,
-			event.pageY - boundingRect.y - padding + props.cell.bounds.minY,
+			event.clientX - boundingRect.x - padding + props.cell.bounds.minX,
+			event.clientY - boundingRect.y - padding + props.cell.bounds.minY,
 		];
 	}
 
@@ -147,7 +147,8 @@ function DisplayCell(props) {
 
   return(<g>
 		<rect x={x} y={y} width={width} height={height}
-			style={{fill:'rgb(255,255,255)','strokeWidth':'3','stroke':'rgb(0,0,0)'}}
+      fill="rgb(240, 240, 240)"
+      rx={3} ry={3}
 		/>
 		<DisplayPaths paths={props.cell.paths}/>
     {currentDisplayed}
@@ -162,15 +163,145 @@ function DisplayCell(props) {
 	</g>);
 }
 
+const spacing = 20;
 //cells = object (dict); children = array of objects (whose elements are note nodes)
 function makeNoteNode(cell, children) {
-  let tree = {cell: cell, children: children}
+  //find sum of max heights of children + padding
+  let sumHeight = 0;
+  children.forEach((child) => {
+    sumHeight += child.maxHeight;
+  });
+  if (children.length > 0) {
+    sumHeight += (children.length - 1) * spacing;
+  }
+
+  const intrinsicHeight = cell.bounds.maxY - cell.bounds.minY + padding * 2;
+  const maxHeight = Math.max(intrinsicHeight, sumHeight);
+
+  return {cell: cell, children: children, maxHeight: maxHeight};
+}
+
+function updateCell(NoteNode, newCell) {
+  return makeNoteNode(newCell, NoteNode.children)
+}
+
+function updateChild(NoteNode, index, newChild) {
+  const newChildren = NoteNode.children.slice()
+  newChildren[index] = newChild
+  return makeNoteNode(NoteNode.cell, newChildren)
+}
+
+const emptyNode = makeNoteNode(emptyCell, [])
+function makeChild(NoteNode) {
+  const newChildren = NoteNode.children.slice()
+  newChildren.push(emptyNode)
+  const newNode = makeNoteNode(NoteNode.cell, newChildren)
+  return newNode
+}
+
+//layout algorithm. Take list of notenodes, figure out position for each one
+
+const horizontalSpacingAspectRatio = 0.2;
+const minHorizontalSpacing = 40;
+
+function CurveBetween(props) {
+  return <path
+    d={`
+      M ${props.x1} ${props.y1}
+      C
+        ${(props.x1 * 2 + props.x2) / 3} ${props.y1},
+        ${(props.x1 + props.x2 * 2) / 3} ${props.y2},
+        ${props.x2} ${props.y2}
+    `}
+    fill="none"
+    stroke="black"
+  />
+}
+
+// Component of note node
+class DisplayNoteNode extends Component{
+  constructor() {
+    super() //calls the super class constructor
+
+    this.childUpdateHandlers = [];
+    this.cellUpdateHandler = (newCell) => {
+      this.props.onNodeUpdate(updateCell(this.props.node, newCell));
+    };
+  }
+
+  prepareChildUpdateHandlers() {
+    while (this.childUpdateHandlers.length < this.props.node.children.length) {
+      const index = this.childUpdateHandlers.length;
+      this.childUpdateHandlers.push((newChild) => {
+        this.props.onNodeUpdate(updateChild(this.props.node, index, newChild));
+      });
+    }
+    this.childUpdateHandlers.length = this.props.node.children.length;
+  }
+
+  render() {
+    const bounds = this.props.node.cell.bounds;
+    const paddedWidth = bounds.maxX - bounds.minX + padding * 2;
+    const paddedHeight = bounds.maxY - bounds.minY + padding * 2;
+    const nodeCell = (
+      <g>
+        <g transform={`translate(${-bounds.minX + padding},${-bounds.minY + padding - paddedHeight / 2})`}>
+          <DisplayCell
+            cell={this.props.node.cell}
+            onCellUpdate={this.cellUpdateHandler}
+          />
+        </g>
+        <line
+          x1={0} y1={paddedHeight / 2}
+          x2={paddedWidth} y2={paddedHeight / 2}
+          stroke="black"
+        />
+      </g>
+    );
+    const horizontalSpacing = Math.max(
+      minHorizontalSpacing,
+      horizontalSpacingAspectRatio * this.props.node.maxHeight
+    );
+    const childXPos = paddedWidth + horizontalSpacing;
+    let childYTop = -this.props.node.maxHeight / 2;
+    const positionedChildren = [];
+    this.prepareChildUpdateHandlers();
+    this.props.node.children.forEach((child, index) => {
+      const childYPos = childYTop + child.maxHeight / 2;
+      const childConnectY = childYPos + (child.cell.bounds.maxY - child.cell.bounds.minY) / 2 + padding;
+      positionedChildren.push(<g>
+        <CurveBetween
+          x1={paddedWidth} y1={paddedHeight / 2}
+          x2={childXPos} y2={childConnectY}
+        />
+        <g transform={`translate(${childXPos},${childYPos})`}>
+          <DisplayNoteNode
+            node={child}
+            onNodeUpdate={this.childUpdateHandlers[index]}
+          />
+        </g>
+      </g>);
+      childYTop += child.maxHeight + spacing;
+    });
+    return <g>
+      {nodeCell}
+      {positionedChildren}
+      <circle
+        cx={paddedWidth} cy={paddedHeight / 2}
+        r={10}
+        fill="rgb(150,150,150)"
+        onClick={(event) => {
+          this.props.onNodeUpdate(makeChild(this.props.node))
+        }}
+      />
+    </g>;
+  }
 }
 
 class App extends Component {
 	constructor() {
 		super()
-		this.state = { cell: emptyCell };
+		this.state = { node: emptyNode };
 	}
 
   render() {
@@ -178,12 +309,14 @@ class App extends Component {
       <div>
         <em> A component!! </em>
         <MindHacks author='Oski' version={4}/>
-        <svg width="500" height="500">
-					<g transform="translate(250, 250)">
-						<DisplayCell
-							cell={this.state.cell}
-							onCellUpdate={(newCell) => this.setState({cell: newCell})}
-						/>
+        <svg width="10000" height="10000">
+					<g transform="translate(500, 500)">
+            <DisplayNoteNode
+              node={this.state.node}
+              onNodeUpdate={(newNode) => {
+                this.setState({ node: newNode });
+              }}
+            />
 					</g>
         </svg>
       </div>
