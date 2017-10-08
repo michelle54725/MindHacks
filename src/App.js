@@ -28,10 +28,6 @@ function DisplayPath(props) {
   return <polyline fill="none" stroke="black" strokeWidth={2} points={props.path}/>;
 }
 
-//Test
-let path = addToPath(empty, [100,100])
-path = addToPath(path, [200,100])
-
 function getBounds(path) {
 	if (path.length == 0) {
 		throw new Error("Path has no points");
