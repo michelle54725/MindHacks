@@ -121,7 +121,6 @@ function DisplayCell(props) {
 	const height = props.cell.bounds.maxY - props.cell.bounds.minY + padding + padding;
 
 	let currentDisplayed = null;
->>>>>>> cc66b75e3d0ec742f8bd36bb69abc7b626d36cee
   if (props.cell.currentPath !== null) {
     currentDisplayed = <DisplayPath path={props.cell.currentPath}/>;
   }
