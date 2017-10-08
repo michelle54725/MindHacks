@@ -32,7 +32,6 @@ function DisplayPath(props) {
 let path = addToPath(empty, [100,100])
 path = addToPath(path, [200,100])
 
-
 function getBounds(path) {
 	if (path.length == 0) {
 		throw new Error("Path has no points");
@@ -53,29 +52,75 @@ function getBounds(path) {
 //Cell takes the min and max values of corresponding paths
 //Initial default cell
 const padding = 40
-const emptyCell = {paths: [], bounds: {minX:0, minY:0, maxX:0, maxY:0}}
+const emptyCell = {currentPath: null, paths: [], bounds: {minX:0, minY:0, maxX:0, maxY:0}}
 
-function newBounds(b1, b2){
-	return {minX: Math.min(b1.minX, b2.minX), minY: Math.min(b1.minY, b2.minY), maxX: Math.max(b1.maxX, b2.maxX), maxY: Math.max(b1.maxY, b2.maxY)};
+function extendBounds(bounds, point) {
+  return {
+    minX: Math.min(bounds.minX, point[0]),
+    minY: Math.min(bounds.minY, point[1]),
+    maxX: Math.max(bounds.maxX, point[0]),
+    maxY: Math.max(bounds.maxY, point[1]),
+  };
 }
 
-function addPath(cell, path){
-	const newpath = cell.paths.slice()
-	newpath.push(path)
-	return {paths: newpath, bounds: newBounds(getBounds(path), cell.bounds)}
+function initializePath(cell) {
+  return {
+    currentPath: empty,
+    paths: cell.paths,
+    bounds: cell.bounds,
+  };
+}
+
+function completePath(cell){
+  if (cell.currentPath === null) {
+    throw new Error("No path to complete!");
+  }
+  const newPaths = cell.paths.slice();
+  newPaths.push(cell.currentPath);
+  return {
+    currentPath: null,
+    paths: newPaths,
+    bounds: cell.bounds,
+  };
+}
+
+function addToCurrentPath(cell, point) {
+  if (cell.currentPath === null) {
+    throw new Error("No path to add to!");
+  }
+  return {
+      currentPath: addToPath(cell.currentPath, point),
+      paths: cell.paths,
+      bounds: extendBounds(cell.bounds, point),
+  };
+}
+
+function DisplayPaths(props) {
+  return <g>
+    {props.paths.map((path) => <DisplayPath path={path}/>)}
+  </g>;
 }
 
 function DisplayCell(props){
-	// const pathList = props.cell.paths.map((path) => pathList[])
-	return(<g>
+  let currentDisplayed = null;
+  if (props.cell.currentPath !== null) {
+    currentDisplayed = <DisplayPath path={props.cell.currentPath}/>;
+  }
+  return(<g>
 		<rect
 			x={props.cell.bounds.minX-padding}
 			y={props.cell.bounds.minY-padding}
 			width={props.cell.bounds.maxX-props.cell.bounds.minX+padding+padding}
 			height={props.cell.bounds.maxY-props.cell.bounds.minY+padding+padding}
 			style="fill:rgb(255,255,255);stroke-width:3;stroke:rgb(0,0,0)"/>
-		{props.cell.paths.map((path) => <DisplayPath path={path}/>)}
-	</g>)
+		<DisplayPaths paths={props.cell.paths}/>
+    {currentDisplayed}
+	</g>);
+}
+
+//cells = object (dict); children = array of objects (whose elements are note nodes)
+function makeNoteNode(cell, children) {
+  let tree = {cell: cell, children: children}
 }
 
 class App extends Component {
