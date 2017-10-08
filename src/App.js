@@ -102,6 +102,10 @@ function DisplayPaths(props) {
 }
 
 function DisplayCell(props){
+//update state
+
+
+
   let currentDisplayed = null;
   if (props.cell.currentPath !== null) {
     currentDisplayed = <DisplayPath path={props.cell.currentPath}/>;
