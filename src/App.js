@@ -64,6 +64,9 @@ function extendBounds(bounds, point) {
 }
 
 function initializePath(cell) {
+	if (cell.currentPath !== null) {
+		console.warn('Already have a current path!');
+	}
   return {
     currentPath: empty,
     paths: cell.paths,
@@ -73,7 +76,8 @@ function initializePath(cell) {
 
 function completePath(cell){
   if (cell.currentPath === null) {
-    throw new Error("No path to complete!");
+    console.warn("No path to complete!");
+		return cell;
   }
   const newPaths = cell.paths.slice();
   newPaths.push(cell.currentPath);
@@ -86,7 +90,8 @@ function completePath(cell){
 
 function addToCurrentPath(cell, point) {
   if (cell.currentPath === null) {
-    throw new Error("No path to add to!");
+    console.warn("No path to add to!");
+		return cell;
   }
   return {
       currentPath: addToPath(cell.currentPath, point),
@@ -101,24 +106,60 @@ function DisplayPaths(props) {
   </g>;
 }
 
-function DisplayCell(props){
-//update state
+function DisplayCell(props) {
+	function eventRelativePoint(event) {
+		const boundingRect = event.target.getBoundingClientRect();
+		return [
+			event.pageX - boundingRect.x - padding + props.cell.bounds.minX,
+			event.pageY - boundingRect.y - padding + props.cell.bounds.minY,
+		];
+	}
 
+	const x = props.cell.bounds.minX - padding;
+	const y = props.cell.bounds.minY - padding;
+	const width = props.cell.bounds.maxX - props.cell.bounds.minX + padding + padding;
+	const height = props.cell.bounds.maxY - props.cell.bounds.minY + padding + padding;
 
-
-  let currentDisplayed = null;
+	let currentDisplayed = null;
+>>>>>>> cc66b75e3d0ec742f8bd36bb69abc7b626d36cee
   if (props.cell.currentPath !== null) {
     currentDisplayed = <DisplayPath path={props.cell.currentPath}/>;
   }
+
+	const handleInitiate = (event) => {
+		const point = eventRelativePoint(event);
+		let newCell = props.cell;
+		newCell = initializePath(newCell);
+		newCell = addToCurrentPath(newCell, point);
+		props.onCellUpdate(newCell);
+	};
+
+	const handleAdd = (event) => {
+		if (props.cell.currentPath !== null) {
+			const point = eventRelativePoint(event);
+			props.onCellUpdate(addToCurrentPath(props.cell, point));
+		}
+	};
+
+	const handleComplete = (event) => {
+		const point = eventRelativePoint(event);
+		props.onCellUpdate(completePath(props.cell, point));
+	}
+
   return(<g>
-		<rect
-			x={props.cell.bounds.minX-padding}
-			y={props.cell.bounds.minY-padding}
-			width={props.cell.bounds.maxX-props.cell.bounds.minX+padding+padding}
-			height={props.cell.bounds.maxY-props.cell.bounds.minY+padding+padding}
-			style="fill:rgb(255,255,255);stroke-width:3;stroke:rgb(0,0,0)"/>
+		<rect x={x} y={y} width={width} height={height}
+			style={{fill:'rgb(255,255,255)','strokeWidth':'3','stroke':'rgb(0,0,0)'}}
+		/>
 		<DisplayPaths paths={props.cell.paths}/>
     {currentDisplayed}
+		<rect x={x} y={y} width={width} height={height}
+			fill="transparent"
+			stroke="tranparent"
+			onMouseDown={handleInitiate}
+			onMouseMove={handleAdd}
+			onMouseUp={handleComplete}
+			onMouseLeave={handleComplete}
+		/>
 	</g>);
 }
 
@@ -128,13 +169,23 @@ function makeNoteNode(cell, children) {
 }
 
 class App extends Component {
+	constructor() {
+		super()
+		this.state = { cell: emptyCell };
+	}
+
   render() {
     return (
       <div>
         <em> A component!! </em>
         <MindHacks author='Oski' version={4}/>
-        <svg>
-        <DisplayPath path={path}/>
+        <svg width="500" height="500">
+					<g transform="translate(250, 250)">
+						<DisplayCell
+							cell={this.state.cell}
+							onCellUpdate={(newCell) => this.setState({cell: newCell})}
+						/>
+					</g>
         </svg>
       </div>
     );
