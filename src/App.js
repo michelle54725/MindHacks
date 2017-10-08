@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import simplify from 'simplify-js';
 import './App.css';
 //components = anything that can be passed into <>
 
@@ -59,6 +60,12 @@ function extendBounds(bounds, point) {
   };
 }
 
+function simplifyPath(path) {
+	return simplify(path.map((p) => ({x: p[0], y: p[1]})))
+		.filter((p) => p !== undefined)
+		.map((p) => [p.x, p.y]);
+}
+
 function initializePath(cell) {
 	if (cell.currentPath !== null) {
 		console.warn('Already have a current path!');
@@ -76,7 +83,7 @@ function completePath(cell){
 		return cell;
   }
   const newPaths = cell.paths.slice();
-  newPaths.push(cell.currentPath);
+  newPaths.push(simplifyPath(cell.currentPath));
   return {
     currentPath: null,
     paths: newPaths,
