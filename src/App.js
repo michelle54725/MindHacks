@@ -247,7 +247,7 @@ function CurveBetween(props) {
   />
 }
 
-function spectrumColor(hue) {
+function hueColor(hue) {
 	return `hsl(${hue}, 100%, 70%)`;
 }
 
@@ -276,7 +276,7 @@ class DisplayNoteNode extends Component{
     const bounds = this.props.node.cell.bounds;
     const paddedWidth = bounds.maxX - bounds.minX + padding * 2;
     const paddedHeight = bounds.maxY - bounds.minY + padding * 2;
-		const connectionColor = spectrumColor(this.props.spectrum.startHue);
+		const connectionColor = hueColor(this.props.startHue);
     const nodeCell = (
       <g>
         <g transform={`translate(${-bounds.minX + padding},${-bounds.minY + padding - paddedHeight / 2})`}>
@@ -301,26 +301,25 @@ class DisplayNoteNode extends Component{
     let childYTop = -this.props.node.maxHeight / 2;
     const positionedChildren = [];
     this.prepareChildUpdateHandlers();
-		const hueStep = (this.props.spectrum.endHue - this.props.spectrum.startHue) / (this.props.node.children.length);
+		const hueStep = (this.props.endHue - this.props.startHue) / (this.props.node.children.length);
     this.props.node.children.forEach((child, index) => {
       const childYPos = childYTop + child.maxHeight / 2;
       const childConnectY = childYPos + (child.cell.bounds.maxY - child.cell.bounds.minY) / 2 + padding;
-			const childSpectrum = {
-				startHue: this.props.spectrum.startHue + hueStep * index,
-				endHue: this.props.spectrum.startHue + hueStep * (index + 1),
-			}
+			const childStartHue = this.props.startHue + hueStep * index;
+			const childEndHue = this.props.startHue + hueStep * (index + 1);
       positionedChildren.push(<g>
         <CurveBetween
           x1={paddedWidth} y1={paddedHeight / 2}
           x2={childXPos} y2={childConnectY}
-					stroke={spectrumColor(childSpectrum.startHue)}
+					stroke={hueColor(childStartHue)}
         />
         <g transform={`translate(${childXPos},${childYPos})`} className="transition-transform">
           <DisplayNoteNode
             node={child}
             onNodeUpdate={this.childUpdateHandlers[index]}
 						onTranslation={this.props.onTranslation}
-						spectrum={childSpectrum}
+						startHue={childStartHue}
+						endHue={childEndHue}
           />
         </g>
       </g>);
@@ -375,7 +374,8 @@ class App extends Component {
               node={this.state.node}
               onNodeUpdate={this.nodeUpdateHandler}
 							onTranslation={this.translationHandler}
-							spectrum={{startHue: 0, endHue: 360}}
+							startHue={0}
+							endHue={360}
             />
 					</g>
         </svg>
