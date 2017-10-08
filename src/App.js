@@ -3,10 +3,16 @@ import simplify from 'simplify-js';
 import './App.css';
 //components = anything that can be passed into <>
 
-function MindHacks(props) {
+// function MindHacks(props) {
 //props = properties = stores data its representing, which is data that will be provided to Component to change)
-  return <span> Author: {props.author}. Version: {props.version}.0. MindHacks!!! </span>;
-//in later <MindHacks/> call: opening tag with slash at end = both opening/closing tags
+
+function Title(props) {
+  return (
+    <div id="Title">
+    <h1> Welcome to your MindHack. </h1>
+      <h2> Write in the NoteNode to start  </h2>
+    </div>
+  )
 }
 
 // Developed by:
@@ -355,7 +361,7 @@ class App extends Component {
 		this.translationHandler = (delta) => {
 			this.setState((old) => ({
 				node: old.node,
-				translation: { 
+				translation: {
 					x: old.translation.x + delta.x,
 					y: old.translation.y + delta.y,
 				},
@@ -366,8 +372,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <em> A component!! </em>
-        <MindHacks author='Oski' version={4}/>
+        <Title name='Name' author='Oski' version={4}/><br />
         <svg width="10000" height="10000">
 					<g transform={`translate(${this.state.translation.x}, ${this.state.translation.y})`}>
             <DisplayNoteNode
