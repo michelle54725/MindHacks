@@ -1,19 +1,32 @@
 /* styling information. used by App.js */
 body {
-    background-color: lightblue;
+    background-color: white;
 }
 
 #Title {
-    color: white;
+    color: gray;
     text-align: center;
 }
 
 h2 {
-    color: black;
+    color: lightgray;
     text-align: center;
+    font-size: 16px;
 }
 
 p {
     font-family: verdana;
     font-size: 20px;
+}
+
+.transition-transform {
+  transition: transform 0.1s;
+}
+
+.transition-path {
+  transition: d 0.1s;
+}
+
+.node {
+  stroke-width: 5px;
 }
