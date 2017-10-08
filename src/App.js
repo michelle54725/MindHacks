@@ -9,7 +9,7 @@ import './App.css';
 function Title(props) {
   return (
     <div id="Title">
-    <h1> Welcome to your MindHack... </h1>
+    <h1> Welcome to your MindHack. </h1>
       <h2> Write in the NoteNode to start  </h2>
     </div>
   )
