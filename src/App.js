@@ -2,10 +2,19 @@ import React, { Component } from 'react';
 import './App.css';
 //components = anything that can be passed into <>
 
-function MindHacks(props) {
+// function MindHacks(props) {
 //props = properties = stores data its representing, which is data that will be provided to Component to change)
-  return <span> Author: {props.author}. Version: {props.version}.0. MindHacks!!! </span>;
-//in later <MindHacks/> call: opening tag with slash at end = both opening/closing tags
+  // return <span> Author: {props.author}. Version: {props.version}.0. MindHacks!!! </span>;
+// }
+
+function Title(props) {
+//props = properties = stores data its representing, which is data that will be provided to Component to change)
+  return (
+    <div id="Title">
+    <h1> Welcome! Here is your MindHack: </h1>
+      <h2> Author: {props.author}. Version: {props.version}.0.</h2>;
+    </div>
+  )
 }
 
 // Developed by:
@@ -303,8 +312,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <em> A component!! </em>
-        <MindHacks author='Oski' version={4}/>
+        <Title name='Name' author='Oski' version={4}/><br />
         <svg width="10000" height="10000">
 					<g transform="translate(500, 500)">
             <DisplayNoteNode
